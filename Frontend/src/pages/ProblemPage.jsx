@@ -330,7 +330,7 @@ const ProblemPage = () => {
                   value={code}
                   onChange={handleEditorChange}
                   onMount={handleEditorDidMount}
-                  theme="vs-dark"
+                  theme="light"
                   options={{
                     fontSize: 14,
                     minimap: { enabled: false },
