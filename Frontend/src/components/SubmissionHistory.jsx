@@ -96,64 +96,66 @@ const SubmissionHistory = ({ problemId }) => {
         </div>
       )}
 
-      {!loading && !error && (!Array.isArray(submissions) || submissions.length === 0) && (
-        <div className="alert alert-info shadow-lg">
-          <div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <span>No submissions found for this problem</span>
+      {!loading && !error && (
+        !Array.isArray(submissions) || submissions.length === 0 ? (
+          <div className="alert alert-info shadow-lg">
+            <div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>No submissions found for this problem</span>
+            </div>
           </div>
-        </div>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Language</th>
-                  <th>Status</th>
-                  <th>Runtime</th>
-                  <th>Memory</th>
-                  <th>Test Cases</th>
-                  <th>Submitted</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {submissions.map((sub, index) => (
-                  <tr key={sub._id || index}>
-                    <td>{index + 1}</td>
-                    <td className="font-mono">{sub.language || 'N/A'}</td>
-                    <td>
-                      <span className={`badge ${getStatusColor(sub.status)}`}>
-                        {sub.status ? (sub.status.charAt(0).toUpperCase() + sub.status.slice(1)) : 'Unknown'}
-                      </span>
-                    </td>
-                    
-                    <td className="font-mono">{sub.runtime !== undefined ? `${sub.runtime}s` : 'N/A'}</td>
-                    <td className="font-mono">{formatMemory(sub.memory)}</td>
-                    <td className="font-mono">{sub.testCasesPassed ?? 0}/{sub.testCasesTotal ?? 0}</td>
-                    <td>{formatDate(sub.createdAt)}</td>
-                    <td>
-                      <button 
-                        className="btn btn-sm btn-outline"
-                        onClick={() => setSelectedSubmission(sub)}
-                      >
-                        Code
-                      </button>
-                    </td>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="table table-zebra w-full">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Language</th>
+                    <th>Status</th>
+                    <th>Runtime</th>
+                    <th>Memory</th>
+                    <th>Test Cases</th>
+                    <th>Submitted</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {submissions.map((sub, index) => (
+                    <tr key={sub._id || index}>
+                      <td>{index + 1}</td>
+                      <td className="font-mono">{sub.language || 'N/A'}</td>
+                      <td>
+                        <span className={`badge ${getStatusColor(sub.status)}`}>
+                          {sub.status ? (sub.status.charAt(0).toUpperCase() + sub.status.slice(1)) : 'Unknown'}
+                        </span>
+                      </td>
+                      
+                      <td className="font-mono">{sub.runtime !== undefined ? `${sub.runtime}s` : 'N/A'}</td>
+                      <td className="font-mono">{formatMemory(sub.memory)}</td>
+                      <td className="font-mono">{sub.testCasesPassed ?? 0}/{sub.testCasesTotal ?? 0}</td>
+                      <td>{formatDate(sub.createdAt)}</td>
+                      <td>
+                        <button 
+                          className="btn btn-sm btn-outline"
+                          onClick={() => setSelectedSubmission(sub)}
+                        >
+                          Code
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-          <p className="mt-4 text-sm text-gray-500">
-            Showing {submissions.length} submission{submissions.length === 1 ? '' : 's'}
-          </p>
-        </>
+            <p className="mt-4 text-sm text-gray-500">
+              Showing {submissions.length} submission{submissions.length === 1 ? '' : 's'}
+            </p>
+          </>
+        )
       )}
 
       {/* Code View Modal */}
