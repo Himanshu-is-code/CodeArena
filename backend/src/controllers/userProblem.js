@@ -251,7 +251,11 @@ const submittedProblem = async(req,res)=>{
 
     const ans = await Submission.find({userId, problemId}).sort({createdAt: -1});
 
-    return res.status(200).json(ans || []);
+    if (ans.length === 0) {
+      return res.status(200).send("No Submission is persent");
+    }
+
+    return res.status(200).json(ans);
 
   }
   catch(err){
