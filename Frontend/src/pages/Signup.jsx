@@ -42,7 +42,7 @@ function Signup() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-base-200"> {/* Added a light bg for contrast */}
       <div className="card w-96 bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title justify-center text-3xl mb-6">Leetcode</h2> {/* Added mb-6 for spacing */}
+          <h2 className="card-title justify-center text-3xl mb-6 font-bold tracking-tight">CodeArena</h2> {/* Added mb-6 for spacing */}
           {error && (
             <div className="alert alert-error mb-4 py-2 text-sm">
               <span>{typeof error === 'string' ? error : error?.message || 'Signup failed'}</span>
