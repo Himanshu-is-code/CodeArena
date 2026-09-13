@@ -1,0 +1,41 @@
+# Node dependencies
+node_modules/
+*/node_modules/
+*/*/node_modules/
+
+# Environment variables & secrets (CRITICAL: Do not commit credentials)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+Frontend/.env
+Frontend/.env.*
+
+# Build outputs
+dist/
+Frontend/dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Editor & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary & system generated files
+.system_generated/
+scratch/
+
+# Local reference & documentation to ignore
+14Dev/
+BUG_FIXES_AND_SETUP.md
+bug_fixes*
+BUG_FIXES*
+
