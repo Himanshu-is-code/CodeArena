@@ -23,6 +23,7 @@ const ProblemPage = () => {
   const [submitResult, setSubmitResult] = useState(null);
   const [activeLeftTab, setActiveLeftTab] = useState('description');
   const [activeRightTab, setActiveRightTab] = useState('code');
+  const [submissionCount, setSubmissionCount] = useState(0);
   const editorRef = useRef(null);
   let { problemId } = useParams();
 
@@ -111,6 +112,7 @@ const ProblemPage = () => {
       });
 
       setSubmitResult(response.data);
+      setSubmissionCount(prev => prev + 1);
     } catch (error) {
       console.error('Error submitting code:', error);
       setSubmitResult({
@@ -260,7 +262,7 @@ const ProblemPage = () => {
 
               {activeLeftTab === 'submissions' && (
                 <div>
-                  <SubmissionHistory key={`${problemId}-${activeLeftTab}`} problemId={problemId} />
+                  <SubmissionHistory key={`${problemId}-${submissionCount}-${activeLeftTab}`} problemId={problemId} />
                 </div>
               )}
 
@@ -351,34 +353,6 @@ const ProblemPage = () => {
                   }}
                 />
               </div>
-
-              {/* Action Buttons */}
-              <div className="p-4 border-t border-base-300 flex justify-between">
-                <div className="flex gap-2">
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setActiveRightTab('testcase')}
-                  >
-                    Console
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    className={`btn btn-outline btn-sm ${loading ? 'loading' : ''}`}
-                    onClick={handleRun}
-                    disabled={loading}
-                  >
-                    Run
-                  </button>
-                  <button
-                    className={`btn btn-primary btn-sm ${loading ? 'loading' : ''}`}
-                    onClick={handleSubmitCode}
-                    disabled={loading}
-                  >
-                    Submit
-                  </button>
-                </div>
-              </div>
             </div>
           )}
 
@@ -414,18 +388,18 @@ const ProblemPage = () => {
                       </div>
                     ) : (
                       <div>
-                        <h4 className="font-bold">❌ {runResult.error || 'Execution Failed'}</h4>
+                        <h4 className="font-bold">❌ Test cases failed</h4>
                         <div className="mt-4 space-y-2">
-                          {runResult.testCases && runResult.testCases.length > 0 ? (
+                          {Array.isArray(runResult.testCases) && runResult.testCases.length > 0 ? (
                             runResult.testCases.map((tc, i) => (
                               <div key={i} className="bg-base-100 p-3 rounded text-xs text-base-content">
                                 <div className="font-mono">
                                   <div><strong>Input:</strong> {tc.stdin}</div>
                                   <div><strong>Expected:</strong> {tc.expected_output}</div>
-                                  {tc.stdout && <div><strong>Output:</strong> {tc.stdout}</div>}
-                                  {(tc.compile_output || tc.stderr) && (
-                                    <div className="text-red-500 whitespace-pre-wrap mt-1">
-                                      <strong>Error:</strong> {tc.compile_output || tc.stderr}
+                                  <div><strong>Output:</strong> {tc.stdout || 'None'}</div>
+                                  {tc.stderr && (
+                                    <div className="text-red-500 mt-1">
+                                      <strong>Error:</strong> {tc.stderr}
                                     </div>
                                   )}
                                   <div className={tc.status_id === 3 ? 'text-green-600 font-bold mt-1' : 'text-red-600 font-bold mt-1'}>
@@ -487,6 +461,34 @@ const ProblemPage = () => {
               )}
             </div>
           )}
+        </div>
+
+        {/* Action Buttons - Always visible docked at bottom of Right Panel */}
+        <div className="p-4 border-t border-base-300 flex justify-between bg-base-100">
+          <div className="flex gap-2">
+            <button
+              className={`btn btn-ghost btn-sm ${activeRightTab === 'code' ? 'btn-active' : ''}`}
+              onClick={() => setActiveRightTab('code')}
+            >
+              Code Editor
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              className={`btn btn-outline btn-sm ${loading ? 'loading' : ''}`}
+              onClick={handleRun}
+              disabled={loading}
+            >
+              Run
+            </button>
+            <button
+              className={`btn btn-primary btn-sm ${loading ? 'loading' : ''}`}
+              onClick={handleSubmitCode}
+              disabled={loading}
+            >
+              Submit
+            </button>
+          </div>
         </div>
       </div>
     </div>
