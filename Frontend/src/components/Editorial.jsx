@@ -43,6 +43,17 @@ const Editorial = ({ secureUrl, thumbnailUrl, duration }) => {
     }
   }, []);
 
+  if (!secureUrl) {
+    return (
+      <div className="alert alert-info shadow-md my-4">
+        <div>
+          <h3 className="font-bold">No Editorial Video</h3>
+          <p className="text-sm opacity-80">A video solution has not been uploaded for this problem yet.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       className="relative w-full max-w-2xl mx-auto rounded-xl overflow-hidden shadow-lg"
