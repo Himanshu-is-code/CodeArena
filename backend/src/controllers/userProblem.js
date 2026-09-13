@@ -238,16 +238,25 @@ const submittedProblem = async(req,res)=>{
 
   try{
      
-    const userId = req.result._id;
+    const userId = req.result?._id;
     const problemId = req.params.pid;
 
-    const ans = await Submission.find({userId,problemId}).sort({createdAt: -1});
+    if (!userId) {
+      return res.status(401).send("User authentication required");
+    }
 
-    return res.status(200).json(ans);
+    if (!problemId) {
+      return res.status(400).send("Problem ID is required");
+    }
+
+    const ans = await Submission.find({userId, problemId}).sort({createdAt: -1});
+
+    return res.status(200).json(ans || []);
 
   }
   catch(err){
-     res.status(500).send("Internal Server Error");
+     console.error("Error in submittedProblem:", err);
+     res.status(500).send("Internal Server Error: " + (err.message || err));
   }
 }
 

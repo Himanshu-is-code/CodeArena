@@ -7,24 +7,28 @@ const SubmissionHistory = ({ problemId }) => {
   const [error, setError] = useState(null);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
 
-  useEffect(() => {
-    const fetchSubmissions = async () => {
-      try {
-        setLoading(true);
-        const response = await axiosClient.get(`/problem/submittedProblem/${problemId}`);
-        setSubmissions(Array.isArray(response.data) ? response.data : []);
-        setError(null);
-      } catch (err) {
-        setError('Failed to fetch submission history');
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const fetchSubmissions = async () => {
+    if (!problemId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axiosClient.get(`/problem/submittedProblem/${problemId}`);
+      setSubmissions(Array.isArray(response.data) ? response.data : []);
+    } catch (err) {
+      console.error('Fetch submissions error:', err);
+      if (err.response?.status === 401) {
+        setError('Session expired or unauthorized. Please log in again.');
+      } else {
+        const msg = err.response?.data?.message || err.response?.data || err.message || 'Failed to fetch submission history';
+        setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
       }
-    };
-
-    if (problemId) {
-      fetchSubmissions();
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchSubmissions();
   }, [problemId]);
 
   const getStatusColor = (status) => {
@@ -56,32 +60,43 @@ const SubmissionHistory = ({ problemId }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="alert alert-error shadow-lg my-4">
-        <div>
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{error}</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-6 text-center">Submission History</h2>
-      
-      {!Array.isArray(submissions) || submissions.length === 0 ? (
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Submission History</h2>
+        <button 
+          className={`btn btn-sm btn-outline ${loading ? 'loading' : ''}`}
+          onClick={fetchSubmissions}
+          disabled={loading}
+        >
+          ↻ Refresh
+        </button>
+      </div>
+
+      {loading && (
+        <div className="flex justify-center items-center h-48">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="alert alert-error shadow-lg my-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
+          </div>
+          <button 
+            className="btn btn-sm btn-outline btn-ghost border border-white/20"
+            onClick={fetchSubmissions}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && (!Array.isArray(submissions) || submissions.length === 0) && (
         <div className="alert alert-info shadow-lg">
           <div>
             <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
