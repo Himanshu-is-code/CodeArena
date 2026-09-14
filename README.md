@@ -3,10 +3,12 @@
 [![React](https://img.shields.io/badge/React-19.x-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Redis](https://img.shields.io/badge/Redis-Cloud-DC382D?logo=redis&logoColor=white)](https://redis.io/)
 [![TailwindCSS](https://img.shields.io/badge/DaisyUI-Tailwind-06B6D4?logo=tailwindcss&logoColor=white)](https://daisyui.com/)
 [![Monaco Editor](https://img.shields.io/badge/Monaco_Editor-VS_Code_Core-007ACC?logo=visual-studio-code&logoColor=white)](https://microsoft.github.io/monaco-editor/)
 [![Gemini](https://img.shields.io/badge/Google_Gemini-AI_Tutor-8E75B2?logo=google&logoColor=white)](https://ai.google.dev/)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-Video_Streaming-3448C5?logo=cloudinary&logoColor=white)](https://cloudinary.com/)
+[![AWS EC2](https://img.shields.io/badge/AWS-EC2_Ubuntu-FF9900?logo=amazon-aws&logoColor=white)](https://aws.amazon.com/ec2/)
 
 **CodeArena** is a production-grade, distributed online judge and algorithmic learning platform. It allows software engineers to solve algorithmic problems, compile and run code in multiple programming languages against automated test suites, receive context-aware hints from an AI tutor, watch high-definition video editorials, and review detailed submission performance analytics.
 
@@ -21,7 +23,7 @@ The platform is designed around a decoupled client-server architecture integrati
                      │          React + Vite Single Page App        │
                      │  (Monaco Editor, Redux Toolkit, DaisyUI)     │
                      └──────────────────────┬───────────────────────┘
-                                            │ HTTPS / REST APIs
+                                            │ HTTPS / REST APIs (Nginx Reverse Proxy)
                                             ▼
                      ┌──────────────────────────────────────────────┐
                      │          Node.js / Express Backend           │
@@ -32,7 +34,13 @@ The platform is designed around a decoupled client-server architecture integrati
            │  MongoDB Atlas  │   │   Judge0    │  │ Gemini │  │  Cloudinary   │
            │  (Users, Code,  │   │  Execution  │  │ AI API │  │ (Video CDN &  │
            │   Submissions)  │   │   Engine    │  │ (LLM)  │  │ Signed Upload)│
-           └─────────────────┘   └─────────────┘  └────────┘  └───────────────┘
+           └─────────┬───────┘   └─────────────┘  └────────┘  └───────────────┘
+                     │
+           ┌─────────▼───────┐
+           │   Redis Cloud   │
+           │ (JWT Blacklist, │
+           │  Rate-Limiting) │
+           └─────────────────┘
 ```
 
 ---
@@ -51,8 +59,9 @@ The platform is designed around a decoupled client-server architecture integrati
 
 ### Backend (Server-Side)
 - **Runtime**: Node.js (CommonJS modules)
-- **Framework**: Express.js
+- **Framework**: Express.js (v5)
 - **Database ORM**: Mongoose ODM with relational references (`ObjectId`).
+- **In-Memory Cache & Token Revocation**: Redis Cloud (`redis` v5 client) for $O(1)$ JWT blacklisting on logout and submission cooldown rate-limiting.
 - **Security & Auth**:
   - JSON Web Tokens (`jsonwebtoken`) signed with HMAC SHA-256.
   - Secure, HTTP-only cookie persistence.
@@ -84,9 +93,10 @@ The platform is designed around a decoupled client-server architecture integrati
 - The frontend uploads the video file directly to Cloudinary CDN storage.
 - Once completed, the metadata (public ID, secure URL, video duration) is persisted in the database and rendered on the problem page.
 
-### 4. Role-Based Access Control (RBAC)
+### 4. Role-Based Access Control (RBAC) & Redis Token Blacklist
 - **Normal Users**: Browse problem catalog, filter by difficulty/tags, solve problems, test code, submit solutions, track submission history, chat with the AI tutor, and watch video editorials.
 - **Admin Users**: Access administrative dashboards to create problems, add hidden/visible test cases, upload video editorials, and manage content.
+- **Session Revocation**: When users log out, the JWT token is decoded and blacklisted in Redis with a TTL matching the token's expiration, immediately invalidating any active sessions.
 
 ---
 
@@ -106,6 +116,7 @@ The platform is designed around a decoupled client-server architecture integrati
 ### Prerequisites
 - Node.js (v18 or higher)
 - MongoDB Database (Atlas or local)
+- Redis Database (Redis Cloud or local instance)
 - Judge0 API Key (RapidAPI or self-hosted)
 - Google Gemini API Key
 - Cloudinary Account (Cloud Name, API Key, API Secret)
@@ -126,7 +137,8 @@ Create a `.env` file in the `backend/` directory:
 ```env
 PORT=3000
 DB_CONNECT_STRING=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_key
+JWT_KEY=your_jwt_secret_key
+REDIS_PASS=your_redis_password
 JUDGE0_API_KEY=your_rapidapi_judge0_key
 GEMINI_API_KEY=your_gemini_api_key
 CLOUDINARY_CLOUD_NAME=your_cloud_name
