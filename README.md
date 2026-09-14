@@ -123,8 +123,8 @@ The platform is designed around a decoupled client-server architecture integrati
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/Himanshu-is-code/CodingPatform.git
-cd CodingPatform
+git clone https://github.com/Himanshu-is-code/CodeArena.git
+cd CodeArena
 ```
 
 ### 2. Backend Setup
