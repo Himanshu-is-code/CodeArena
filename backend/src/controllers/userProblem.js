@@ -121,7 +121,9 @@ const updateProblem = async (req,res)=>{
 
      for(const test of testResult){
       if(test.status_id!=3){
-       return res.status(400).send("Error Occured");
+       return res.status(400).json({ 
+         message: `Reference solution for ${language} failed test case verification (${test.status?.description || 'Failed'}). Please check your reference code.` 
+       });
       }
      }
 
@@ -130,10 +132,10 @@ const updateProblem = async (req,res)=>{
 
   const newProblem = await Problem.findByIdAndUpdate(id , {...req.body}, {runValidators:true, new:true});
    
-  res.status(200).send(newProblem);
+  return res.status(200).json(newProblem);
   }
   catch(err){
-      res.status(500).send("Error: "+err);
+      return res.status(500).json({ message: "Error updating problem: " + (err.message || err) });
   }
 }
 
@@ -168,7 +170,10 @@ const getProblemById = async(req,res)=>{
     if(!id)
       return res.status(400).send("ID is Missing");
 
-    const getProblem = await Problem.findById(id).select('_id title description difficulty tags visibleTestCases startCode referenceSolution ');
+    const selectFields = req.result?.role === 'admin'
+      ? '_id title description difficulty tags visibleTestCases hiddenTestCases startCode referenceSolution'
+      : '_id title description difficulty tags visibleTestCases startCode referenceSolution';
+    const getProblem = await Problem.findById(id).select(selectFields);
    
     // video ka jo bhi url wagera le aao
 

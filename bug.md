@@ -15,16 +15,17 @@ This document records all bugs, root causes, and solutions implemented across th
 6. [MongoDB Duplicate Key Error on `problemSolved`](#6-mongodb-duplicate-key-error-on-problemsolved)
 7. [Express `ERR_HTTP_HEADERS_SENT` in Handlers](#7-express-err_http_headers_sent-in-handlers)
 8. [False Positive `problemSolved` Increment](#8-false-positive-problemsolved-increment)
+9. [Admin "Update Problem" Blank White Page](#9-admin-update-problem-blank-white-page)
 
 ### Part 2: AWS Cloud, Nginx & Production Deployment Fixes
-9. [Terminal "Freeze" on Git Clone (GitHub HTTPS Auth)](#9-terminal-freeze-on-git-clone-github-https-auth)
-10. [MongoDB Atlas `MongooseServerSelectionError` (IP Whitelisting)](#10-mongodb-atlas-mongooseserverselectionerror-ip-whitelisting)
-11. [Linux Case-Sensitivity Path Failure (`frontend` vs `Frontend`)](#11-linux-case-sensitivity-path-failure-frontend-vs-frontend)
-12. [Missing `dist` Directory on EC2 (Gitignore Build Requirement)](#12-missing-dist-directory-on-ec2-gitignore-build-requirement)
-13. [Nginx `500 Internal Server Error` (Internal Redirection Cycle)](#13-nginx-500-internal-server-error-internal-redirection-cycle)
-14. [`ERR_CONNECTION_REFUSED` Due to Browser Forcing HTTPS](#14-err_connection_refused-due-to-browser-forcing-https)
-15. [Production API Client Bundling Bug (`localhost:3000` Fallback)](#15-production-api-client-bundling-bug-localhost3000-fallback)
-16. [Zero-Config Free Domain & Automated HTTPS via Certbot](#16-zero-config-free-domain--automated-https-via-certbot)
+10. [Terminal "Freeze" on Git Clone (GitHub HTTPS Auth)](#10-terminal-freeze-on-git-clone-github-https-auth)
+11. [MongoDB Atlas `MongooseServerSelectionError` (IP Whitelisting)](#11-mongodb-atlas-mongooseserverselectionerror-ip-whitelisting)
+12. [Linux Case-Sensitivity Path Failure (`frontend` vs `Frontend`)](#12-linux-case-sensitivity-path-failure-frontend-vs-frontend)
+13. [Missing `dist` Directory on EC2 (Gitignore Build Requirement)](#13-missing-dist-directory-on-ec2-gitignore-build-requirement)
+14. [Nginx `500 Internal Server Error` (Internal Redirection Cycle)](#14-nginx-500-internal-server-error-internal-redirection-cycle)
+15. [`ERR_CONNECTION_REFUSED` Due to Browser Forcing HTTPS](#15-err_connection_refused-due-to-browser-forcing-https)
+16. [Production API Client Bundling Bug (`localhost:3000` Fallback)](#16-production-api-client-bundling-bug-localhost3000-fallback)
+17. [Zero-Config Free Domain & Automated HTTPS via Certbot](#17-zero-config-free-domain--automated-https-via-certbot)
 
 ---
 
@@ -93,9 +94,24 @@ This document records all bugs, root causes, and solutions implemented across th
 
 ---
 
+## 9. Admin "Update Problem" Blank White Page
+* **Symptom:** Navigating to "Update Problem" (`/admin/update`) from the Admin Dashboard or clicking update displayed a blank white screen.
+* **Root Cause:**
+  1. **Missing Frontend Route:** `Admin.jsx` configured the "Update Problem" card with `route: '/admin/update'`, but `Frontend/src/App.jsx` had no route matching `/admin/update` or `/admin/update/:problemId`. Without a matching route or wildcard fallback, React Router rendered `null` (blank page).
+  2. **Missing Frontend Components:** There were no components for listing problems to update or an edit problem form prefilled with existing problem data.
+  3. **Backend `getProblemById` Field Exclusion:** `backend/src/controllers/userProblem.js` excluded `hiddenTestCases` in its query projection (`.select(...)`). When an admin fetched a problem to update it, `hiddenTestCases` was missing, failing validation or stripping test cases upon save.
+* **Fix:**
+  * Created `Frontend/src/components/AdminUpdate.jsx` to list problems with search/filtering and direct "Edit" action buttons.
+  * Created `Frontend/src/components/AdminEditProblem.jsx` prefilled with existing title, description, difficulty, tags, visible test cases, hidden test cases, code templates, and reference solutions, backed by React Hook Form and Zod schema validation.
+  * Registered `/admin/update` and `/admin/update/:problemId` protected admin routes in `App.jsx`, along with a wildcard catch-all route `<Route path="*" element={<Navigate to="/" />} />` to prevent future blank screen traps on unknown URLs.
+  * Updated `backend/src/controllers/userProblem.js` `getProblemById` to include `hiddenTestCases` when requested by an admin (`req.result?.role === 'admin'`), and improved `updateProblem` error handling to return clear descriptive JSON messages.
+  * Added a direct "Edit Problem" shortcut on `ProblemPage.jsx` visible only to admin users.
+
+---
+
 # Part 2: AWS Cloud, Nginx & Production Deployment Fixes
 
-## 9. Terminal "Freeze" on Git Clone (GitHub HTTPS Auth)
+## 10. Terminal "Freeze" on Git Clone (GitHub HTTPS Auth)
 * **Symptom:** Running `git clone https://github.com/...` on the EC2 instance appeared to freeze and ignore keyboard typing at `Password for 'https://...':`.
 * **Root Cause:**
   1. Linux terminal hides password input completely (no asterisks or cursor movement) for security.
@@ -106,7 +122,7 @@ This document records all bugs, root causes, and solutions implemented across th
 
 ---
 
-## 10. MongoDB Atlas `MongooseServerSelectionError` (IP Whitelisting)
+## 11. MongoDB Atlas `MongooseServerSelectionError` (IP Whitelisting)
 * **Symptom:** Node backend crashed on EC2 with `MongooseServerSelectionError: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted.`
 * **Root Cause:** Atlas default firewall blocks all IPs except those explicitly whitelisted. The AWS EC2 instance had a new IP address not known to Atlas.
 * **Fix:**
@@ -115,14 +131,14 @@ This document records all bugs, root causes, and solutions implemented across th
 
 ---
 
-## 11. Linux Case-Sensitivity Path Failure (`frontend` vs `Frontend`)
+## 12. Linux Case-Sensitivity Path Failure (`frontend` vs `Frontend`)
 * **Symptom:** Running `sudo chmod 755 /home/ubuntu/CodingPatform/frontend/` returned `chmod: cannot access: No such file or directory`.
 * **Root Cause:** Unlike Windows/macOS, Linux filesystems (ext4) are strictly case-sensitive. The directory on disk was `Frontend` (capital `F`), not `frontend`.
 * **Fix:** Corrected all script paths and configuration directives to use `Frontend` with capital `F`.
 
 ---
 
-## 12. Missing `dist` Directory on EC2 (Gitignore Build Requirement)
+## 13. Missing `dist` Directory on EC2 (Gitignore Build Requirement)
 * **Symptom:** `chmod -R 755 .../Frontend/dist/` returned `No such file or directory`.
 * **Root Cause:** Vite's build output (`dist/`) is excluded by `.gitignore` and never exists in a freshly cloned repository.
 * **Fix:**
@@ -136,7 +152,7 @@ This document records all bugs, root causes, and solutions implemented across th
 
 ---
 
-## 13. Nginx `500 Internal Server Error` (Internal Redirection Cycle)
+## 14. Nginx `500 Internal Server Error` (Internal Redirection Cycle)
 * **Symptom:** `curl http://localhost:80` returned `500 Internal Server Error`, and `/var/log/nginx/error.log` reported:
   `rewrite or internal redirection cycle while internally redirecting to "/index.html"`.
 * **Root Cause:**
@@ -148,7 +164,7 @@ This document records all bugs, root causes, and solutions implemented across th
 
 ---
 
-## 14. `ERR_CONNECTION_REFUSED` Due to Browser Forcing HTTPS
+## 15. `ERR_CONNECTION_REFUSED` Due to Browser Forcing HTTPS
 * **Symptom:** The website worked on local curl but showed `ERR_CONNECTION_REFUSED` on mobile phones and desktop browsers.
 * **Root Cause:** Modern browsers (Chrome, Safari, Brave) automatically upgrade HTTP requests to HTTPS (port 443). Because no SSL certificate was installed, port 443 was closed and rejected connections.
 * **Fix:**
@@ -157,7 +173,7 @@ This document records all bugs, root causes, and solutions implemented across th
 
 ---
 
-## 15. Production API Client Bundling Bug (`localhost:3000` Fallback)
+## 16. Production API Client Bundling Bug (`localhost:3000` Fallback)
 * **Symptom:** The login and signup pages rendered, but clicking "Login" or "Sign Up" showed an infinite loading spinner and did nothing.
 * **Root Cause:**
   * `axiosClient.js` had: `baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000'`.
@@ -173,7 +189,7 @@ This document records all bugs, root causes, and solutions implemented across th
 
 ---
 
-## 16. Zero-Config Free Domain & Automated HTTPS via Certbot
+## 17. Zero-Config Free Domain & Automated HTTPS via Certbot
 * **Implementation:**
   * Used `sslip.io` dynamic DNS mapping: `13.233.75.23.sslip.io` automatically resolves to `13.233.75.23` without registration or DNS dashboard setup.
   * Set `server_name 13.233.75.23.sslip.io;` in Nginx.

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import Editor from '@monaco-editor/react';
-import { useParams } from 'react-router';
+import { useParams, NavLink } from 'react-router';
+import { useSelector } from 'react-redux';
 import axiosClient from "../utils/axiosClient"
 import SubmissionHistory from "../components/SubmissionHistory"
 import ChatAi from '../components/ChatAi';
@@ -26,6 +27,7 @@ const ProblemPage = () => {
   const [submissionCount, setSubmissionCount] = useState(0);
   const editorRef = useRef(null);
   let { problemId } = useParams();
+  const { user } = useSelector((state) => state.auth);
 
 
 
@@ -205,6 +207,14 @@ const ProblemPage = () => {
                       {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
                     </div>
                     <div className="badge badge-primary">{problem.tags}</div>
+                    {user?.role === 'admin' && (
+                      <NavLink
+                        to={`/admin/update/${problemId}`}
+                        className="btn btn-xs btn-warning ml-auto"
+                      >
+                        Edit Problem
+                      </NavLink>
+                    )}
                   </div>
 
                   <div className="prose max-w-none">
